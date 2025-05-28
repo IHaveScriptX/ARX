@@ -2524,6 +2524,11 @@ AP:AddDropdownR("Select Unit to Upgrade", unitNames, _G.SST.Select_Unit, functio
     _G.SST.Select_Unit = Select_Unit
     SS()
 end)
+_G.SST.Ignore_Units = _G.SST.Ignore_Units or {}
+AP:AddMultiDropdownR("Units to Ignore", unitNames, _G.SST.Ignore_Units, function(value)
+    _G.SST.Ignore_Units = value
+    SS()
+end)
 
 AP:AddToggleR("Auto Upgrade Unit", _G.SST.Auto_Upgrade, function(state)
     Auto_Upgrade = state
@@ -2676,28 +2681,26 @@ end
 
 
 		-- Auto Upgrade (เฉพาะตัวที่เลือก)
-		if sst.Auto_Upgrade and sst.Select_Unit then
-	local player = game:GetService("Players").LocalPlayer
-	local yenValue = player.PlayerGui.HUD.InGame.Main.Stats.Yen.YenValue.Value
+		if sst.Auto_Upgrade and unitsFolder then
+    local yenValue = player.PlayerGui.HUD.InGame.Main.Stats.Yen.YenValue.Value
+    local ignoreList = sst.Ignore_Units or {}
 
-	for _, unit in ipairs(unitsFolder:GetChildren()) do
-		if unit:IsA("Instance") then
-			if sst.Select_Unit == "All Unit" or unit.Name == sst.Select_Unit then
-				local costTextObj = player.PlayerGui.HUD.InGame.UnitsManager.Main.Main.ScrollingFrame:FindFirstChild(unit.Name)
-				if costTextObj and costTextObj:FindFirstChild("CostText") then
-					local costText = costTextObj.CostText.Text
-					local cost = tonumber(costText:match("Cost:</font>%s*(%d+)")) or 0
+    for _, unit in ipairs(unitsFolder:GetChildren()) do
+        if unit:IsA("Instance") and not table.find(ignoreList, unit.Name) then
+            local costTextObj = player.PlayerGui.HUD.InGame.UnitsManager.Main.Main.ScrollingFrame:FindFirstChild(unit.Name)
+            if costTextObj and costTextObj:FindFirstChild("CostText") then
+                local costText = costTextObj.CostText.Text
+                local cost = tonumber(costText:match("Cost:</font>%s*(%d+)")) or 0
 
-					if yenValue >= cost then
-						pcall(function()
-							task.wait(0.2)
-							upgradeRemote:FireServer(unit)
-						end)
-					end
-				end
-			end
-		end
-	end
+                if yenValue >= cost then
+                    pcall(function()
+                        task.wait(0.2)
+                        upgradeRemote:FireServer(unit)
+                    end)
+                end
+            end
+        end
+    end
 end
 
 
