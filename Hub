@@ -2860,7 +2860,7 @@ RunService.Heartbeat:Connect(function()
             
             if rewardsUI and rewardsUI.Enabled then
                 if not hasSent then
-                    local Name = player.Name
+                    local Name = "||"..player.Name.. "||"
                     local GameTime = rewardsUI.Main.LeftSide.TotalTime.Text
                     local rewardsText = ""
                     local rewardsFrame = player:FindFirstChild("RewardsShow")
