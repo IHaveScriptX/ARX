@@ -2219,22 +2219,24 @@ task.spawn(function()
     local rangerStage = game:GetService("ReplicatedStorage").Player_Data:FindFirstChild(PyName).RangerStage
 
     while task.wait() do
-        if _G.SST.Auto_Join_Ranger and workspace:FindFirstChild("Lobby") and #rangerStage:GetChildren() < 20 then 
+        if _G.SST.Auto_Join_Ranger and workspace:FindFirstChild("Lobby") then 
             for _, stage in ipairs(allStages) do
-                while workspace:FindFirstChild("Lobby")
-                    and _G.SST.Auto_Join_Ranger
-                    and #rangerStage:GetChildren() < 20
-                    and not game:GetService("Players").LocalPlayer.PlayerGui:FindFirstChild("SystemMessage") do
-
-                    task.wait(0.1)
+                if #rangerStage:GetChildren() >= 20 then
+                    break -- หยุดเมื่อครบ 20 ด่าน
+                end
+                
+                if not _G.SST.Auto_Join_Ranger then
+                    break -- หยุดเมื่อปิดโหมดออโต้
+                end
+                
+                if workspace:FindFirstChild("Lobby") and not game:GetService("Players").LocalPlayer.PlayerGui:FindFirstChild("SystemMessage") then
                     startRangerStage(stage.world, stage.chapter)
-                    -- ไม่ต้องใช้ childrenCount แยกอีกแล้ว ใช้ #rangerStage:GetChildren() ตรงๆ
+                    task.wait(0.5) -- รอสักครู่ก่อนเริ่มด่านถัดไป
                 end
             end
         end
     end
 end)
-
 
 
 
@@ -2524,11 +2526,6 @@ AP:AddDropdownR("Select Unit to Upgrade", unitNames, _G.SST.Select_Unit, functio
     _G.SST.Select_Unit = Select_Unit
     SS()
 end)
-_G.SST.Ignore_Units = _G.SST.Ignore_Units or {}
-AP:AddMultiDropdownR("Units to Ignore", unitNames, _G.SST.Ignore_Units, function(value)
-    _G.SST.Ignore_Units = value
-    SS()
-end)
 
 AP:AddToggleR("Auto Upgrade Unit", _G.SST.Auto_Upgrade, function(state)
     Auto_Upgrade = state
@@ -2536,10 +2533,9 @@ AP:AddToggleR("Auto Upgrade Unit", _G.SST.Auto_Upgrade, function(state)
 
     SS()
 end)
-AP:AddToggleR("Wait For Upgrade Unit", _G.SST.Wait_For_Upgrade_Unit, function(state)
-    Wait_For_Upgrade_Unit = state
-	_G.SST.Wait_For_Upgrade_Unit = Wait_For_Upgrade_Unit 
-
+_G.SST.Ignore_Units = _G.SST.Ignore_Units or {}
+AP:AddMultiDropdownR("Units to Ignore", unitNames, _G.SST.Ignore_Units, function(value)
+    _G.SST.Ignore_Units = value
     SS()
 end)
 
@@ -2664,7 +2660,7 @@ if not hasModel and rewardsUI and rewardsUI.Enabled and (RWBT.Retry.Visible == t
 elseif not hasModel and rewardsUI and rewardsUI.Enabled 
 	and RWBT.Leave.Visible 
 	and not RWBT.Retry.Visible and not RWBT.Next.Visible 
-	and contains(sst.Select_Vote, "Leave") then    
+	and contains(sst.Select_Vote, "VoteLeave") then    
     game:GetService("TeleportService"):Teleport(72829404259339)
     
 end
@@ -2860,7 +2856,7 @@ RunService.Heartbeat:Connect(function()
             
             if rewardsUI and rewardsUI.Enabled then
                 if not hasSent then
-                    local Name = "||"..player.Name.. "||"
+                    local Name = player.Name
                     local GameTime = rewardsUI.Main.LeftSide.TotalTime.Text
                     local rewardsText = ""
                     local rewardsFrame = player:FindFirstChild("RewardsShow")
