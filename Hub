@@ -1,3 +1,4 @@
+---- test
 repeat wait() until game:GetService("Players").LocalPlayer
 repeat wait() until game:GetService("ReplicatedStorage").Player_Data
 repeat wait() until game:GetService("ReplicatedStorage").Player_Data:FindFirstChild(game:GetService("Players").LocalPlayer.Name)
@@ -2526,18 +2527,18 @@ AP:AddDropdownR("Select Unit to Upgrade", unitNames, _G.SST.Select_Unit, functio
     _G.SST.Select_Unit = Select_Unit
     SS()
 end)
-
+_G.SST.Ignore_Units = _G.SST.Ignore_Units or {}
+AP:AddMultiDropdownR("Units to Ignore", unitNames, _G.SST.Ignore_Units, function(value)
+    _G.SST.Ignore_Units = value
+    SS()
+end)
 AP:AddToggleR("Auto Upgrade Unit", _G.SST.Auto_Upgrade, function(state)
     Auto_Upgrade = state
 	_G.SST.Auto_Upgrade = Auto_Upgrade 
 
     SS()
 end)
-_G.SST.Ignore_Units = _G.SST.Ignore_Units or {}
-AP:AddMultiDropdownR("Units to Ignore", unitNames, _G.SST.Ignore_Units, function(value)
-    _G.SST.Ignore_Units = value
-    SS()
-end)
+
 
 spawn(function()
     local Players = game:GetService("Players")
