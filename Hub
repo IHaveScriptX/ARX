@@ -1,3 +1,4 @@
+--- text 
 repeat wait() until game:GetService("Players").LocalPlayer
 repeat wait() until game:GetService("ReplicatedStorage").Player_Data
 repeat wait() until game:GetService("ReplicatedStorage").Player_Data:FindFirstChild(game:GetService("Players").LocalPlayer.Name)
@@ -2665,28 +2666,38 @@ if sst.Auto_Vote and sst.Select_Vote and visual then
 				end
 			end
 
-			if not hasModel and rewardsUI and rewardsUI.Enabled and RWBT then
-				print("No model found, UI active.")
-				if (RWBT.Retry and RWBT.Retry.Visible) or (RWBT.Next and RWBT.Next.Visible) then
-					print("Firing vote remote:", voteName)
-					voteRemote:FireServer()
-				elseif (RWBT.Leave and RWBT.Leave.Visible)
-					and not (RWBT.Retry and RWBT.Retry.Visible)
-					and not (RWBT.Next and RWBT.Next.Visible)
-					and contains(sst.Select_Vote, "VoteLeave") then
-					
-					print("VoteLeave condition met. Teleporting...")
-					local placeId = 72829404259339 -- เปลี่ยนตามต้องการ
-					game:GetService("TeleportService"):Teleport(placeId)
-				else
-					print("No matching vote button visible.")
-				end
+			-- ในกรณีไม่มี Model
+if not hasModel and rewardsUI and rewardsUI.Enabled and RWBT then
+	print("No model found, UI active.")
+
+	-- ถ้ามี Retry หรือ Next → โหวตปกติ
+	if (RWBT.Retry and RWBT.Retry.Visible) or (RWBT.Next and RWBT.Next.Visible) then
+		print("Firing vote remote:", voteName)
+		voteRemote:FireServer()
+
+	-- ถ้าเจอ Leave แต่ยังไม่มี Retry/Next ให้รอสักครู่ก่อน Teleport
+	elseif (RWBT.Leave and RWBT.Leave.Visible)
+		and not (RWBT.Retry and RWBT.Retry.Visible)
+		and not (RWBT.Next and RWBT.Next.Visible)
+		and contains(sst.Select_Vote, "VoteLeave") then
+		
+		print("Detected Leave visible but no Retry/Next — waiting...")
+
+		task.delay(1.5, function() -- รอ 1.5 วินาที (ปรับได้)
+			-- เช็คอีกครั้งว่าปุ่ม Retry/Next ยังไม่โผล่
+			if not (RWBT.Retry and RWBT.Retry.Visible) and not (RWBT.Next and RWBT.Next.Visible) then
+				print("Still no Retry/Next. Teleporting...")
+				local placeId = 72829404259339
+				game:GetService("TeleportService"):Teleport(placeId)
 			else
-				print("Conditions not met: hasModel =", hasModel, "rewardsUI =", rewardsUI, "RWBT =", RWBT)
+				print("Retry or Next appeared after delay. Canceling Leave.")
 			end
-		else
-			print("No voteRemote found for", voteName)
-		end
+		end)
+
+	else
+		print("No matching vote button visible.")
+	end
+
 	end)
 end
 
