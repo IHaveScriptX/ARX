@@ -1,4 +1,3 @@
----- test
 repeat wait() until game:GetService("Players").LocalPlayer
 repeat wait() until game:GetService("ReplicatedStorage").Player_Data
 repeat wait() until game:GetService("ReplicatedStorage").Player_Data:FindFirstChild(game:GetService("Players").LocalPlayer.Name)
@@ -2635,7 +2634,14 @@ task.spawn(function()
 	while task.wait(0) do
 		local sst = _G.SST
 		if not sst then continue end
-		-- Auto Vote
+local function contains(tbl, val)
+	for _, v in ipairs(tbl) do
+		if v == val then return true end
+	end
+	return false
+end
+
+-- Auto Vote
 local vim = game:GetService("VirtualInputManager")
 local visual = workspace:FindFirstChild("Visual")
 
@@ -2644,7 +2650,9 @@ if sst.Auto_Vote and sst.Select_Vote and visual then
 		local voteName = typeof(sst.Select_Vote) == "table" and sst.Select_Vote[math.random(1, #sst.Select_Vote)] or nil
 		local voteRemote = voteName and votePath:FindFirstChild(voteName)
 		local rewardsUI = gui:FindFirstChild("RewardsUI")
-        local RWBT = rewardsUI.Main.LeftSide:FindFirstChild("Button")
+        local RWBT = rewardsUI and rewardsUI:FindFirstChild("Main") and rewardsUI.Main:FindFirstChild("LeftSide") and rewardsUI.Main.LeftSide:FindFirstChild("Button")
+
+		print("Selected Vote:", voteName)
 		
 		if voteRemote then
 			local hasModel = false
@@ -2656,21 +2664,31 @@ if sst.Auto_Vote and sst.Select_Vote and visual then
 					vim:SendMouseButtonEvent(clickX, clickY, 0, false, game, 0)
 				end
 			end
-if not hasModel and rewardsUI and rewardsUI.Enabled and (RWBT.Retry.Visible == true or RWBT.Next.Visible == true) then
-    voteRemote:FireServer()
-elseif not hasModel and rewardsUI and rewardsUI.Enabled 
-	and RWBT.Leave.Visible 
-	and not RWBT.Retry.Visible and not RWBT.Next.Visible 
-	and contains(sst.Select_Vote, "VoteLeave") then    
-    game:GetService("TeleportService"):Teleport(72829404259339)
-    
-end
 
+			if not hasModel and rewardsUI and rewardsUI.Enabled and RWBT then
+				print("No model found, UI active.")
+				if (RWBT.Retry and RWBT.Retry.Visible) or (RWBT.Next and RWBT.Next.Visible) then
+					print("Firing vote remote:", voteName)
+					voteRemote:FireServer()
+				elseif (RWBT.Leave and RWBT.Leave.Visible)
+					and not (RWBT.Retry and RWBT.Retry.Visible)
+					and not (RWBT.Next and RWBT.Next.Visible)
+					and contains(sst.Select_Vote, "VoteLeave") then
+					
+					print("VoteLeave condition met. Teleporting...")
+					local placeId = 72829404259339 -- เปลี่ยนตามต้องการ
+					game:GetService("TeleportService"):Teleport(placeId)
+				else
+					print("No matching vote button visible.")
+				end
+			else
+				print("Conditions not met: hasModel =", hasModel, "rewardsUI =", rewardsUI, "RWBT =", RWBT)
+			end
+		else
+			print("No voteRemote found for", voteName)
 		end
 	end)
 end
-
-
 
 
 
