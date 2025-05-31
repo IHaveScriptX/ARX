@@ -1,4 +1,3 @@
---- text 
 repeat wait() until game:GetService("Players").LocalPlayer
 repeat wait() until game:GetService("ReplicatedStorage").Player_Data
 repeat wait() until game:GetService("ReplicatedStorage").Player_Data:FindFirstChild(game:GetService("Players").LocalPlayer.Name)
@@ -2651,10 +2650,10 @@ if sst.Auto_Vote and sst.Select_Vote and visual then
 		local voteName = typeof(sst.Select_Vote) == "table" and sst.Select_Vote[math.random(1, #sst.Select_Vote)] or nil
 		local voteRemote = voteName and votePath:FindFirstChild(voteName)
 		local rewardsUI = gui:FindFirstChild("RewardsUI")
-        local RWBT = rewardsUI and rewardsUI:FindFirstChild("Main") and rewardsUI.Main:FindFirstChild("LeftSide") and rewardsUI.Main.LeftSide:FindFirstChild("Button")
+		local RWBT = rewardsUI and rewardsUI:FindFirstChild("Main") and rewardsUI.Main:FindFirstChild("LeftSide") and rewardsUI.Main.LeftSide:FindFirstChild("Button")
 
 		print("Selected Vote:", voteName)
-		
+
 		if voteRemote then
 			local hasModel = false
 			for _, child in ipairs(visual:GetChildren()) do
@@ -2666,38 +2665,45 @@ if sst.Auto_Vote and sst.Select_Vote and visual then
 				end
 			end
 
-			-- ในกรณีไม่มี Model
-if not hasModel and rewardsUI and rewardsUI.Enabled and RWBT then
-	print("No model found, UI active.")
+			if not hasModel and rewardsUI and rewardsUI.Enabled and RWBT then
+				print("No model found, UI active.")
 
-	-- ถ้ามี Retry หรือ Next → โหวตปกติ
-	if (RWBT.Retry and RWBT.Retry.Visible) or (RWBT.Next and RWBT.Next.Visible) then
-		print("Firing vote remote:", voteName)
-		voteRemote:FireServer()
+				local retryVisible = RWBT.Retry and RWBT.Retry.Visible
+				local nextVisible = RWBT.Next and RWBT.Next.Visible
+				local leaveVisible = RWBT.Leave and RWBT.Leave.Visible
 
-	-- ถ้าเจอ Leave แต่ยังไม่มี Retry/Next ให้รอสักครู่ก่อน Teleport
-	elseif (RWBT.Leave and RWBT.Leave.Visible)
-		and not (RWBT.Retry and RWBT.Retry.Visible)
-		and not (RWBT.Next and RWBT.Next.Visible)
-		and contains(sst.Select_Vote, "VoteLeave") then
-		
-		print("Detected Leave visible but no Retry/Next — waiting...")
+				-- กรณี Retry หรือ Next โผล่ → โหวตเลย
+				if retryVisible or nextVisible then
+					print("Firing vote remote:", voteName)
+					voteRemote:FireServer()
 
-		task.delay(1.5, function() -- รอ 1.5 วินาที (ปรับได้)
-			-- เช็คอีกครั้งว่าปุ่ม Retry/Next ยังไม่โผล่
-			if not (RWBT.Retry and RWBT.Retry.Visible) and not (RWBT.Next and RWBT.Next.Visible) then
-				print("Still no Retry/Next. Teleporting...")
-				local placeId = 72829404259339
-				game:GetService("TeleportService"):Teleport(placeId)
+				-- กรณี Leave โผล่ก่อน แต่ยังไม่มี Retry/Next → รอเช็คอีกครั้ง
+				elseif leaveVisible and not retryVisible and not nextVisible and contains(sst.Select_Vote, "VoteLeave") then
+					print("Detected Leave only, delaying to double check...")
+
+					task.delay(1.5, function()
+						-- ตรวจสอบใหม่หลังดีเลย์
+						local retryStillVisible = RWBT.Retry and RWBT.Retry.Visible
+						local nextStillVisible = RWBT.Next and RWBT.Next.Visible
+
+						if not retryStillVisible and not nextStillVisible then
+							print("Still no Retry/Next. Executing Leave teleport.")
+							local placeId = 72829404259339 -- เปลี่ยนเป็น Place ID จริง
+							game:GetService("TeleportService"):Teleport(placeId)
+						else
+							print("Retry/Next appeared after delay. Leave canceled.")
+						end
+					end)
+
+				else
+					print("No voting buttons visible. Waiting...")
+				end
 			else
-				print("Retry or Next appeared after delay. Canceling Leave.")
+				print("Conditions not met: hasModel =", hasModel, "rewardsUI =", rewardsUI, "RWBT =", RWBT)
 			end
-		end)
-
-	else
-		print("No matching vote button visible.")
-	end
-
+		else
+			print("No voteRemote found for:", voteName)
+		end
 	end)
 end
 
